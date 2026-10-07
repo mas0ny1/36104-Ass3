@@ -1,0 +1,4 @@
+# No [theme] section on purpose: setting one replaces Streamlit's
+# light/dark switch, and the charts pick colours for both modes.
+[browser]
+gatherUsageStats = false
