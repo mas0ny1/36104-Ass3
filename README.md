@@ -1,32 +1,22 @@
-# Who controls frontier AI?
+# Who controls AI Innovation?
 
 36104 Data Visualisation and Narratives, Assignment 3: an interactive data
 narrative built with Streamlit.
 
-**Question:** *Is the power to build frontier AI concentrating in fewer organisations?*
-
-The dashboard follows the AI supply chain, one tab per team member. Each tab
-lives in its own folder with its own data and code, so everyone can work
-without touching anyone else's files.
+**Question:** *Are Cutting Edge AI Development being retricted and concentrated into fewer organisations?*
 
 | Tab | Folder | Sub-question | Owner | Status |
 |---|---|---|---|---|
-| 1 · Builders | [`dashboards/tab1_builders`](dashboards/tab1_builders) | Who is producing notable and frontier models? | TBC | Done |
-| 2 · Compute | [`dashboards/tab2_compute`](dashboards/tab2_compute) | Who owns the chips and the clusters? | TBC | Not started |
-| 3 · Capital | [`dashboards/tab3_capital`](dashboards/tab3_capital) | Where is the money going? | TBC | Not started |
-| 4 · Capability | [`dashboards/tab4_capability`](dashboards/tab4_capability) | Is the gap between the leaders and everyone else closing? | TBC | Not started |
+| 1 · Mason | [`dashboards/tab1_builders`](dashboards/tab1_builders) | Who is producing notable and frontier models? | Mason
+| 2 · Compute | [`dashboards/tab2_compute`](dashboards/tab2_compute) | Who owns the chips and the clusters? | 
+| 3 · Capital | [`dashboards/tab3_capital`](dashboards/tab3_capital) | Where is the money going? | 
+| 4 · Capability | [`dashboards/tab4_capability`](dashboards/tab4_capability) | Is the gap between the leaders and everyone else closing? | 
 
 ## Run it
-
 ```bash
-python -m venv .venv
-.venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app.py                                  # the full dashboard
-streamlit run dashboards/tab2_compute/app.py          # just one tab
 ```
-
-Run every command from the project root.
 
 ## Layout
 
@@ -36,7 +26,7 @@ core/                      shared base code, used by every tab
   page.py                  Page contract, error isolation, standalone runner
   theme.py                 chart colours for light and dark mode
 dashboards/
-  tab1_builders/           one folder per tab, all with the same layout:
+  tab1_builders/           
     __init__.py              PAGE: label, question, owner
     app.py                   runs this tab on its own
     README.md                data sources log and processing steps
@@ -66,14 +56,6 @@ requirements.txt           one environment for the whole app
    `key="compute_year_range"`. Widget keys are shared across the whole app,
    so two tabs using the same key will clash.
 6. Put your name in `owner` in your `__init__.py`.
-
-Inside your folder, import your own modules relatively
-(`from . import analysis, loading`) and shared code absolutely
-(`from core.theme import colours`).
-
-If your tab raises an error, only your tab shows it; the rest of the
-dashboard keeps working. `dashboards/tab1_builders` is a complete example to
-copy from.
 
 **Shared files:** `app.py`, `core/` and `requirements.txt` affect everyone.
 Agree on changes with the group before editing them. If you need a new
