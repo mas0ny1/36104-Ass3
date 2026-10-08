@@ -5,6 +5,6 @@ from .src.views import render
 PAGE = Page(
     label="2 · Compute",
     question="Who owns the chips and the clusters?",
-    owner="To be confirmed",
+    owner="Duc Vu",
     render=render,
 )
