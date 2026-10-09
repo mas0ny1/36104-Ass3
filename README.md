@@ -3,7 +3,7 @@
 36104 Data Visualisation and Narratives, Assignment 3: an interactive data
 narrative built with Streamlit.
 
-**Question:** *Are Cutting Edge AI Development being retricted and concentrated into fewer organisations?*
+**Question:** *Is Cutting-Edge AI Development being restricted and concentrated into fewer organisations?*
 
 | Tab | Folder | Sub-question | Owner | Status |
 |---|---|---|---|---|

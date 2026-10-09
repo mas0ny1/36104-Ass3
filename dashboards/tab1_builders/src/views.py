@@ -161,7 +161,7 @@ def render():
               delta_arrow="off")
 
     # ---- 1. sector -----------------------------------------------------------
-    st.subheader("1. Insitutation Type breakdown of developed AI models from 2010 to 2025")
+    st.subheader("1. Institution Type breakdown of developed AI models from 2010 to 2025")
     st.markdown(
         f"In {y0}, {ind[y0]:.0%} of notable models came from companies alone; "
         f"by {y1} it was **{ind[y1]:.0%}**. Academic-only models, which made up "
@@ -213,12 +213,12 @@ def render():
     with st.container(border=True):
         st.markdown("#### Summary")
         st.markdown(
-            f"Companies (as opposed to academia) now make {ind[y1]:.0%} of notable models. Many Academic Groups still release large "
-            f"models, with {lead} ({lead_home}) the most prolific, however most innovation is concentrated within: "
+            f"Companies (as opposed to academia) now make {ind[y1]:.0%} of notable models. Many companies still release large "
+            f"models, with {lead} ({lead_home}) the most prolific, however the training compute behind them is concentrated: "
             f"{', '.join(top_comp.index[:2])} and {top_comp.index[2]} account for "
             f"{top3_share:.0%} of it. The cost of a cutting-edge AI training and development "
             f"has grown about {growth:.1f}× a year, reaching "
-            f"${priciest['cost_usd'] / 1e6:,.0f}M as a maximum example. **Despite these limitations, many academic groups do still build models, however "
+            f"${priciest['cost_usd'] / 1e6:,.0f}M as a maximum example. **Many companies still build large models, however "
             "only a few can afford the largest ones.**")
 
     # ---- method --------------------------------------------------------------

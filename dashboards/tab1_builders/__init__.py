@@ -6,7 +6,7 @@ from .src.views import render
 
 PAGE = Page(
     label="1 · Mason",
-    question="Who is innovating on cuttting-edge AI?",
+    question="Who is innovating on cutting-edge AI?",
     owner="Mason",
     render=render,
 )

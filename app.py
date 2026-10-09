@@ -1,4 +1,4 @@
-"""Who Controls Frontier AI? - 36104 Assignment 3 data narrative.
+"""Who Controls AI Innovation? - 36104 Assignment 3 data narrative.
 
 Run from the project root:  streamlit run app.py
 
@@ -19,12 +19,12 @@ DASHBOARDS = [
     "dashboards.tab4_capability",
 ]
 
-st.set_page_config(page_title="Who Controls Frontier AI?", layout="wide")
+st.set_page_config(page_title="Who Controls AI Innovation?", layout="wide")
 
 pages = [load_page(name) for name in DASHBOARDS]
 
-st.title("Who controls frontier AI?")
-st.markdown("### Is the power to build frontier AI concentrating in fewer organisations?")
+st.title("Who controls AI Innovation?")
+st.markdown("### Is Cutting-Edge AI Development being restricted and concentrated into fewer organisations?")
 st.markdown(
     "Reasonable people disagree. One side points to a handful of US companies "
     "with the chips, the cash and the record-breaking training runs. The other "
