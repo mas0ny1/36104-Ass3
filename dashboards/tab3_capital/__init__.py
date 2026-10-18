@@ -1,3 +1,5 @@
+"""Tab 3 - Capital: where is the money going?"""
+
 from core.page import Page
 
 from .src.views import render

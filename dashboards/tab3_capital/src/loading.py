@@ -1,4 +1,49 @@
+"""Read and clean the Epoch AI 'Data on AI chip sales' file.
+
+Every number in this tab comes from one CSV in data/raw/epoch_ai_chip_sales/
+(downloaded from https://epoch.ai/data/ai-chip-sales):
+
+    timelines_by_chip.csv  quarterly shipments of each AI chip, with an
+                           estimated cost per chip and total cost
+
+Cleaning only happens here. Calculations are in analysis.py, charts in views.py.
+"""
+
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-RAW_DIR = DATA_DIR / "raw"
+import pandas as pd
+
+DATA_FILE = (Path(__file__).resolve().parents[1]
+             / "data" / "raw" / "epoch_ai_chip_sales" / "timelines_by_chip.csv")
+DOWNLOADED = "13 October 2026"
+
+# Nvidia, Google and AMD get their own colour in the charts. Every other
+# designer in the file is grouped as "Other designers" (shown in grey).
+NAMED_DESIGNERS = ["Nvidia", "Google", "AMD"]
+OTHER_DESIGNERS = "Other designers"
+DESIGNER_GROUPS = NAMED_DESIGNERS + [OTHER_DESIGNERS]
+
+
+def load_chip_sales():
+    """One row per chip type per quarter.
+
+    Columns: chip, maker (the designer), designer (the chart group), date (the
+    last day of the quarter), year, units shipped and spend in US dollars.
+
+    Spend is Epoch's "Cost Estimate (USD)", which is units shipped x an
+    approximate cost per chip. Some chips have no cost estimate in the file, so
+    their spend is 0 here. That means "unknown", not "free".
+    """
+    df = pd.read_csv(DATA_FILE)
+
+    df["date"] = pd.to_datetime(df["End date"])
+    df["year"] = df["date"].dt.year
+    df["chip"] = df["Chip type"]
+    df["maker"] = df["Chip manufacturer"]
+    df["units"] = df["Number of Units"]
+    df["spend"] = df["Cost Estimate (USD)"]
+
+    # Chart group: the three named designers, or "Other designers".
+    df["designer"] = df["maker"].where(df["maker"].isin(NAMED_DESIGNERS), OTHER_DESIGNERS)
+
+    return df[["chip", "maker", "designer", "date", "year", "units", "spend"]]
