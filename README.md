@@ -9,7 +9,7 @@ narrative built with Streamlit.
 |---|---|---|---|---|
 | 1 · Builders | [`dashboards/tab1_builders`](dashboards/tab1_builders) | Who is producing notable and frontier models? | Mason | Complete |
 | 2 · Compute | [`dashboards/tab2_compute`](dashboards/tab2_compute) | Who owns the chips and the clusters? | Duc Vu | Complete |
-| 3 · Capital | [`dashboards/tab3_capital`](dashboards/tab3_capital) | Where is the money going? | To be confirmed | Stub |
+| 3 · Capital | [`dashboards/tab3_capital`](dashboards/tab3_capital) | Where is the money going? | Yogi Jaya Kusuma | Complete |
 | 4 · Capability | [`dashboards/tab4_capability`](dashboards/tab4_capability) | Is the gap between the leaders and everyone else closing? | To be confirmed | Stub |
 
 ---
