@@ -23,7 +23,7 @@ narrative built with Streamlit.
 
 ## User Stories
 
-The dashboard supports three core user stories in the standard `As a..., I want..., so that...` format:
+The dashboard supports five core user stories in the standard `As a..., I want..., so that...` format:
 
 1. **Story 1 (Model Production):**
    *As a competition analyst, I want to* track which organizations produce notable and frontier models over time, *so that I can* evaluate whether cutting-edge model development has transitioned irreversibly from academic institutions into private industry labs.  
@@ -36,6 +36,14 @@ The dashboard supports three core user stories in the standard `As a..., I want.
 3. **Story 3 (Silicon Supply & Physical Grid Bottlenecks):**
    *As a policy researcher, I want to* analyze upstream chip shipments over time and examine cluster power requirements (MW) against compute scale, *so that I can* determine whether hardware vendor monopolies and electrical grid constraints reinforce Big Tech dominance over sovereign alternatives.  
    *Walkthrough:* Open **Tab 2 · Compute**, examine the quarterly *Chip Delivery Time-Series* (2022–2026) showing Nvidia supplying >76% of all AI accelerator compute, and use the *Minimum Cluster Scale* slider with the *Power vs Compute* log-log scatter plot to isolate megaclusters (>100 MW).
+
+4. **Story 4 (Chip Spend Concentration):**
+   *As a competition analyst, I want to* see how the estimated value of AI chips shipped is split between chip designers and individual chips, *so that I can* judge whether the money flowing into AI hardware is concentrated in one supplier and a handful of chips.
+   *Walkthrough:* Open **Tab 3 · Capital**, read the headline cards (about \$192B of chips shipped in 2025, 18 times the \$10.8B of 2022, with Nvidia's share at 79%, down from 97%), switch the Question 1 chart between *US\$ value* and *Share of total*, then use the designer buttons under Question 3 to switch Nvidia off and see which chips lead among the other designers (Huawei's Ascend 910C and Google's TPU v7 over 2022–2026). The figures are Epoch AI's cost estimates for chips shipped; they show which designers' chips the money is attached to, not who bought them.
+
+5. **Story 5 (Shift to Newer Chips):**
+   *As a policy researcher, I want to* see whether spending moves from older chips to each new generation, *so that I can* tell whether a supplier's lead is renewed with every new chip generation.
+   *Walkthrough:* Open **Tab 3 · Capital** and read the Question 2 heat map from the oldest chip at the top to the newest at the bottom: A100 takes 85% of the 2022 total, H100/H200 peaks in 2024 (\$67.0B), then B200 (\$63.6B in 2025) and B300 (\$118B in January–September 2026) take over.
 
 ---
 

@@ -17,18 +17,12 @@ DATA_FILE = (Path(__file__).resolve().parents[1]
              / "data" / "raw" / "epoch_ai_chip_sales" / "timelines_by_chip.csv")
 DOWNLOADED = "13 October 2026"
 
-# Nvidia, Google and AMD get their own colour in the charts. Every other
-# designer in the file is grouped as "Other designers" (shown in grey).
-NAMED_DESIGNERS = ["Nvidia", "Google", "AMD"]
-OTHER_DESIGNERS = "Other designers"
-DESIGNER_GROUPS = NAMED_DESIGNERS + [OTHER_DESIGNERS]
-
 
 def load_chip_sales():
     """One row per chip type per quarter.
 
-    Columns: chip, maker (the designer), designer (the chart group), date (the
-    last day of the quarter), year, units shipped and spend in US dollars.
+    Columns: chip, maker (the chip designer), date (the last day of the
+    quarter), year, units shipped and spend in US dollars.
 
     Spend is Epoch's "Cost Estimate (USD)", which is units shipped x an
     approximate cost per chip. Some chips have no cost estimate in the file, so
@@ -43,7 +37,4 @@ def load_chip_sales():
     df["units"] = df["Number of Units"]
     df["spend"] = df["Cost Estimate (USD)"]
 
-    # Chart group: the three named designers, or "Other designers".
-    df["designer"] = df["maker"].where(df["maker"].isin(NAMED_DESIGNERS), OTHER_DESIGNERS)
-
-    return df[["chip", "maker", "designer", "date", "year", "units", "spend"]]
+    return df[["chip", "maker", "date", "year", "units", "spend"]]

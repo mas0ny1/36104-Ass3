@@ -29,6 +29,11 @@ HEAT_MAP_ROW_HEIGHT = 30     # question 2: pixels per chip row
 TOP_CHIPS_ROW_HEIGHT = 22    # question 3: pixels per chip row
 MIN_LABEL_SHARE = 0.03       # share view: no % label on slices thinner than 3%
 
+# The shared theme (core/theme.py) has three colours. Nvidia, Google and AMD use those.
+# Huawei and Amazon get two more, set here, so every designer has its own colour.
+EXTRA_COLOURS_LIGHT = {"Huawei": "#7b4fd0", "Amazon": "#b8860b"}
+EXTRA_COLOURS_DARK = {"Huawei": "#a67cf0", "Amazon": "#e3b83a"}
+
 # Epoch's note on these two chips (from its chip_types.csv file).
 B200_NOTE = ("Epoch notes that most B200 and B300 chips shipped inside GB200 and GB300 "
              "systems, so it uses the GB200 and GB300 specifications to estimate their cost.")
@@ -77,9 +82,16 @@ def latest_full_year(chips):
     return last_date.year - 1
 
 
-def designer_colours(c):
-    """One colour per chart group, in the same order as loading.DESIGNER_GROUPS."""
-    return alt.Scale(domain=loading.DESIGNER_GROUPS, range=c["series"] + [c["other"]])
+def designer_colours(c, designers):
+    """One colour per chip designer, in the same order as the `designers` list."""
+    colour_of = {"Nvidia": c["series"][0], "Google": c["series"][1], "AMD": c["series"][2]}
+    if c["surface"] == "#ffffff":
+        colour_of.update(EXTRA_COLOURS_LIGHT)
+    else:
+        colour_of.update(EXTRA_COLOURS_DARK)
+    # A designer without a colour of its own (none today) falls back to grey.
+    colours_in_order = [colour_of.get(name, c["other"]) for name in designers]
+    return alt.Scale(domain=designers, range=colours_in_order)
 
 
 def top_legend():
@@ -90,7 +102,7 @@ def top_legend():
 # Filters
 # --------------------------------------------------------------------------
 
-def filter_row(chips, makers):
+def filter_row(chips, designers):
     """Show the years slider and the designer box.
 
     Returns (first year, last year, rows) or None if nothing is left to draw.
@@ -103,7 +115,7 @@ def filter_row(chips, makers):
         "Years", first_data_year, last_data_year, (first_data_year, last_data_year),
         key="capital_years")
     chosen_makers = col_makers.multiselect(
-        "Chip designers", makers, default=makers, key="capital_designers")
+        "Chip designers", designers, default=designers, key="capital_designers")
 
     # One year alone has nothing to compare with, so widen it to two years.
     widened = first_year == last_year
@@ -126,7 +138,7 @@ def filter_row(chips, makers):
     parts = [f"{first_year}–{last_year}"]
     if widened:
         parts[0] += " (a range needs two years)"
-    if len(chosen_makers) == len(makers):
+    if len(chosen_makers) == len(designers):
         parts.append("all designers")
     else:
         parts.append(join_names(chosen_makers))
@@ -142,10 +154,10 @@ def filter_row(chips, makers):
 # Charts
 # --------------------------------------------------------------------------
 
-def designer_chart(table, show_share, c):
+def designer_chart(table, show_share, designers, c):
     """Question 1: bars for each year, split by designer, in dollars or as a share."""
     d = table.copy()
-    d["order"] = d["designer"].map(loading.DESIGNER_GROUPS.index)
+    d["order"] = d["maker"].map(designers.index)
     d = d.sort_values(["year", "order"])
 
     # Work out where each slice starts and ends so we can put labels in the middle.
@@ -158,12 +170,12 @@ def designer_chart(table, show_share, c):
     d["middle"] = (d["start"] + d["end"]) / 2
 
     if show_share:
-        y_title = "Share of the year's chip spend"
+        y_title = "Share of the year's chip value shipped"
         y_format = "%"
         y_top = 1
         tooltip_value = alt.Tooltip("value:Q", title="Share of the year", format=".0%")
     else:
-        y_title = "Estimated chip spend (US$ billions)"
+        y_title = "Estimated value of chips shipped (US$ billions)"
         y_format = "$,.0f"
         y_top = max(d["end"].max(), 1e-9) * 1.1      # leave room for the total above each bar
         tooltip_value = alt.Tooltip("value:Q", title="US$ billions", format=",.1f")
@@ -174,9 +186,10 @@ def designer_chart(table, show_share, c):
         y=alt.Y("start:Q", title=y_title, scale=alt.Scale(domain=[0, y_top]),
                 axis=alt.Axis(format=y_format, tickCount=6)),
         y2="end:Q",
-        color=alt.Color("designer:N", title=None, scale=designer_colours(c), legend=top_legend()),
+        color=alt.Color("maker:N", title=None, scale=designer_colours(c, designers),
+                        legend=top_legend()),
         tooltip=[alt.Tooltip("year:O", title="Year"),
-                 alt.Tooltip("designer:N", title="Designer"),
+                 alt.Tooltip("maker:N", title="Designer"),
                  tooltip_value])
 
     if show_share:
@@ -228,7 +241,7 @@ def heat_map(table, chip_order, c):
     return (cells + text).properties(height=alt.Step(HEAT_MAP_ROW_HEIGHT))
 
 
-def top_chips_chart(top, c):
+def top_chips_chart(top, designers, c):
     """Question 3: horizontal bars for the chips with the most spend."""
     d = top.copy()
     d["billions"] = d["spend"] / BILLION
@@ -237,10 +250,11 @@ def top_chips_chart(top, c):
     y = alt.Y("chip:N", sort=d["chip"].tolist(), title=None,
               axis=alt.Axis(labelLimit=250, labelOverlap=False))
     bars = alt.Chart(d).mark_bar(cornerRadiusEnd=4, size=15).encode(
-        x=alt.X("billions:Q", title="Estimated spend in the selected years (US$ billions)",
+        x=alt.X("billions:Q", title="Estimated value of chips shipped in the selected years (US$ billions)",
                 axis=alt.Axis(format="$,.0f", tickCount=6)),
         y=y,
-        color=alt.Color("designer:N", title=None, scale=designer_colours(c), legend=top_legend()),
+        color=alt.Color("maker:N", title=None, scale=designer_colours(c, designers),
+                        legend=top_legend()),
         tooltip=[alt.Tooltip("chip:N", title="Chip"),
                  alt.Tooltip("maker:N", title="Designer"),
                  alt.Tooltip("label:N", title="Total · share")])
@@ -254,21 +268,21 @@ def top_chips_chart(top, c):
 # The three questions: text, chart and caption for each
 # --------------------------------------------------------------------------
 
-def question_1(rows, first_year, last_year, c, other_makers):
+def question_1(rows, first_year, last_year, c, designers, no_cost_designers):
     """How big is the bill, and who is paid?"""
-    view = st.segmented_control("Show", ["US$ spent", "Share of spend"], default="US$ spent",
+    view = st.segmented_control("Show", ["US$ value", "Share of total"], default="US$ value",
                                 required=True, key="capital_metric",
                                 label_visibility="collapsed")
-    table = analysis.spend_by_designer(rows, (first_year, last_year))
+    table = analysis.spend_by_designer(rows, (first_year, last_year), designers)
 
     # One or two sentences above the chart.
     total_first = analysis.year_total(rows, first_year)
     total_last = analysis.year_total(rows, last_year)
     if total_first > 0:
-        text = (f"Estimated chip spending went from {money(total_first)} in {first_year} "
+        text = (f"The estimated value of AI chips shipped went from {money(total_first)} in {first_year} "
                 f"to **{money(total_last)} in {last_year}**.")
     else:
-        text = f"Estimated chip spending was **{money(total_last)} in {last_year}**."
+        text = f"The estimated value of AI chips shipped was **{money(total_last)} in {last_year}**."
 
     leader, share_last = analysis.biggest_designer(rows, last_year)
     designers_in_last_year = rows.loc[rows["year"] == last_year, "maker"].nunique()
@@ -282,14 +296,19 @@ def question_1(rows, first_year, last_year, c, other_makers):
         text += "."
     st.markdown(esc(text))
 
-    st.altair_chart(designer_chart(table, view == "Share of spend", c), width="stretch",
-                    alt="Stacked bar chart of AI chip spending by year, split by chip designer, "
-                        "in dollars or as a share.")
+    # Designers with no cost estimate at all cannot be drawn, so say so.
+    not_shown = ""
+    if no_cost_designers:
+        not_shown = f"Not shown (no cost estimate in the data): {join_names(no_cost_designers)}. "
+    st.altair_chart(designer_chart(table, view == "Share of total", designers, c), width="stretch",
+                    alt="Stacked bar chart of the estimated value of AI chips shipped each year, "
+                        "split by chip designer, in dollars or as a share.")
 
     st.caption(esc(
-        "Spend = estimated chips shipped × Epoch's approximate cost per chip. "
-        f"'Other designers' = {join_names(other_makers)}. Chips with no cost estimate "
-        "count as $0. In the share view, slices under 3% have no label."))
+        "Value = estimated chips shipped × Epoch's approximate cost per chip. The file does not say "
+        "whether that is the price a buyer paid or the cost of making the chip, so read it as Epoch's "
+        "estimated value of the chips. Each chip designer has its own colour. Chips with no cost estimate count as $0. "
+        + not_shown + "In the share view, slices under 3% have no label."))
 
 
 def question_2(rows, first_year, last_year, c):
@@ -299,7 +318,7 @@ def question_2(rows, first_year, last_year, c):
     chip_first, spend_first, share_first = analysis.top_chip_of_year(rows, first_year)
     chip_last, spend_last, share_last = analysis.top_chip_of_year(rows, last_year)
     if chip_first and chip_last:
-        text = (f"In {first_year} the most spending went to **{chip_first}** "
+        text = (f"In {first_year} the most money went to **{chip_first}** "
                 f"({money(spend_first)}, {share_first:.0%} of the year). ")
         if chip_first == chip_last:
             text += f"In {last_year} it still went to **{chip_last}** "
@@ -310,20 +329,21 @@ def question_2(rows, first_year, last_year, c):
 
     table, chip_order = analysis.spend_by_chip_year(rows, (first_year, last_year), HEAT_MAP_CHIPS)
     st.altair_chart(heat_map(table, chip_order, c), width="stretch",
-                    alt="Heat map of spending on each of the top AI chips by year, oldest chip first.")
+                    alt="Heat map of the value of each of the top AI chips shipped by year, oldest chip first.")
     st.caption(esc(
-        f"The {HEAT_MAP_CHIPS} chips with the most spend in the selected years, listed from oldest "
-        "to newest (by when most of their spending happened). A darker cell means more spending. "
+        f"The {HEAT_MAP_CHIPS} chips with the most value shipped in the selected years, listed from oldest "
+        "to newest (by when most of their value was shipped). A darker cell means more money. "
+        "Same measure as question 1: chips shipped × Epoch's approximate cost per chip, split by chip. "
         + B200_NOTE))
 
 
-def question_3(rows, first_year, last_year, c):
+def question_3(rows, first_year, last_year, c, designers):
     """Which chips take the money?"""
     st.subheader("3. Which chips take the money?")
-    groups = st.pills("Designer", loading.DESIGNER_GROUPS, selection_mode="multi",
-                      default=loading.DESIGNER_GROUPS, key="capital_chip_groups")
+    groups = st.pills("Designer", designers, selection_mode="multi",
+                      default=designers, key="capital_chip_groups")
 
-    rows = rows[rows["designer"].isin(groups)]
+    rows = rows[rows["maker"].isin(groups)]
     if rows["spend"].sum() == 0:
         if not groups:
             st.info("Pick at least one designer above.")
@@ -335,10 +355,10 @@ def question_3(rows, first_year, last_year, c):
     top = analysis.top_chips(rows, TOP_CHIPS_SHOWN)
     top3 = top.head(3)
 
-    if len(groups) == len(loading.DESIGNER_GROUPS):
-        what = "spending"
+    if len(groups) == len(designers):
+        what = "the value of all chips shipped"
     else:
-        what = "spending by the selected designers"
+        what = "the value of chips shipped by the selected designers"
     text = (f"From {first_year} to {last_year}, the top {len(top3)} chips took "
             f"**{money_and_share(top3['spend'].sum(), top3['share'].sum())}** of {what}: "
             f"{join_names(top3['chip'])}")
@@ -347,8 +367,8 @@ def question_3(rows, first_year, last_year, c):
         text += f" (all {top3_makers[0]})"
     st.markdown(esc(text + "."))
 
-    st.altair_chart(top_chips_chart(top, c), width="stretch",
-                    alt=f"Bar chart of the {len(top)} AI chips with the highest spending.")
+    st.altair_chart(top_chips_chart(top, designers, c), width="stretch",
+                    alt=f"Bar chart of the {len(top)} AI chips with the highest value shipped.")
     st.caption(B200_NOTE)
 
 
@@ -397,12 +417,12 @@ def headline_facts(chips):
 
 def show_cards(f):
     cards = [
-        (f"Estimated spend on AI chips, {f['last']}", money(f["total_last"]),
+        (f"Estimated value of AI chips shipped, {f['last']}", money(f["total_last"]),
          f"{f['total_last'] / f['total_first']:.0f}× the {money(f['total_first'])} of {f['first']}"),
-        (f"Estimated spend on Nvidia chips, {f['last']}", money(f["nvidia_last_spend"]),
-         f"{f['nvidia_last']:.0%} of the year's spend ({f['nvidia_first']:.0%} in {f['first']})"),
+        (f"Estimated value of Nvidia chips shipped, {f['last']}", money(f["nvidia_last_spend"]),
+         f"{f['nvidia_last']:.0%} of the year's total ({f['nvidia_first']:.0%} in {f['first']})"),
         (f"Biggest chip, {f['last']}", f["chip_last"],
-         f"{money(f['chip_last_spend'])}, {f['chip_last_share']:.0%} of the year's spend"),
+         f"{money(f['chip_last_spend'])}, {f['chip_last_share']:.0%} of the year's total"),
     ]
     if f["partial_year"]:
         cards.append((f"{f['partial_year']} so far (to {f['partial_month_name']})",
@@ -437,7 +457,7 @@ def show_summary(f):
             f"{money_and_share(newest2['spend'].sum(), newest2['share'].sum())}.",
 
             f"**Which chips:** {join_names(top3['chip'])} took "
-            f"{money_and_share(top3['spend'].sum(), top3['share'].sum())} of all spending from {first} to {last}.",
+            f"{money_and_share(top3['spend'].sum(), top3['share'].sum())} of the value shipped from {first} to {last}.",
         ]
         if f["partial_year"]:
             bullets.append(
@@ -450,8 +470,9 @@ def show_summary(f):
         for line in bullets:
             bullet_list += "- " + line + "\n"
         st.markdown(esc(bullet_list))
-        st.markdown(esc("These are Epoch's estimates of what the chips cost when shipped, so they show "
-                        "who was paid, not who bought the chips."))
+        st.markdown(esc("These are Epoch's cost estimates for the chips shipped, so they show which "
+                        "designers' chips the money is attached to, not who bought them. The file does not "
+                        "say whether a figure is a price paid or a cost to make."))
 
 
 def show_methods(chips):
@@ -466,12 +487,15 @@ def show_methods(chips):
 (`timelines_by_chip.csv`). Cleaning is in `src/loading.py` and calculations in
 `src/analysis.py`.
 
-- **Spend** is Epoch's *Cost Estimate* column (units shipped × approximate cost per chip),
-  added up by the year each quarter ends. Designers other than Nvidia, Google and AMD
-  are grouped as 'Other designers'.
-- **Question 2** keeps the {HEAT_MAP_CHIPS} chips with the most spend in the selected years and lists
-  them from oldest to newest by the average year of their spending.
-- **Question 3** adds up spend per chip over the selected years and keeps the top {TOP_CHIPS_SHOWN}.
+- **Value shipped** ("spend" in the code) is Epoch's *Cost Estimate* column (units shipped ×
+  approximate cost per chip), added up by the year each quarter ends. The file does not say whether
+  this is the price a buyer paid or the cost of making the chip.
+  Every chip designer is shown separately. A designer whose chips have no cost estimate at all
+  is left out of the charts and the filters.
+- **Question 2** keeps the {HEAT_MAP_CHIPS} chips with the most value shipped in the selected years and lists
+  them from oldest to newest by the average year of their shipments.
+- **Question 3** adds up value shipped per chip over the selected years and keeps the top {TOP_CHIPS_SHOWN}.
+  The bar length is dollars; the label shows dollars and share.
 - **Filters** (years, chip designers) apply to all three charts. The cards and the summary
   always use all chips for the first year to the latest full year.
 
@@ -479,9 +503,10 @@ def show_methods(chips):
 - Costs are Epoch's estimates. Epoch also gives lower and upper unit estimates (5th and 95th
   percentile); this tab uses the main estimate only.
 - {len(no_cost)} chips have no cost estimate ({join_names(no_cost)}). They are about
-  {units_share:.0%} of all chips shipped and count as $0 spend.
+  {units_share:.0%} of all chips shipped and count as $0.
 - Some costs come from outside reports. Epoch's notes say the Huawei Ascend 910B and 910C
-  costs are based on reported prices. {B200_NOTE}
+  costs are based on press reports of selling prices and order values (Epoch rounds them to $15k
+  and $20k per chip), and that the Trainium2 cost is about $4k per chip according to SemiAnalysis. {B200_NOTE}
 - Epoch flags the latest quarter as incomplete for several chips, and {last_date.year} only covers
   January to {last_date.strftime('%B')}.
 - The file lists chips shipped by designer. It has no column for who bought them, so it cannot
@@ -496,14 +521,14 @@ def show_methods(chips):
 def render():
     c = colours()
     chips = load_data()
-    makers = analysis.makers_by_spend(chips)
-    other_makers = [m for m in makers if m not in loading.NAMED_DESIGNERS]
+    designers = analysis.designers_with_spend(chips)
+    no_cost_designers = analysis.designers_without_spend(chips)
     facts = headline_facts(chips)
 
     last_date = chips["date"].max()
     st.markdown(
         "This tab uses Epoch AI's estimates of how many AI chips were shipped each quarter "
-        f"({int(chips['year'].min())} to {last_date.strftime('%B %Y')}) and what those chips cost. "
+        f"({int(chips['year'].min())} to {last_date.strftime('%B %Y')}) and Epoch's cost estimate for those chips. "
         "It asks **how big the bill is and who is paid**, **whether the money is moving to "
         "newer chips** and **which chips take the money**.")
 
@@ -511,12 +536,12 @@ def render():
 
     # Question 1 comes first, and the shared filters sit right under its heading.
     st.subheader("1. How big is the bill, and who is paid?")
-    selection = filter_row(chips, makers)
+    selection = filter_row(chips, designers)
     if selection:
         first_year, last_year, rows = selection
-        question_1(rows, first_year, last_year, c, other_makers)
+        question_1(rows, first_year, last_year, c, designers, no_cost_designers)
         question_2(rows, first_year, last_year, c)
-        question_3(rows, first_year, last_year, c)
+        question_3(rows, first_year, last_year, c, designers)
 
     show_summary(facts)
     show_methods(chips)

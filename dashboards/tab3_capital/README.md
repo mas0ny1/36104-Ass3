@@ -22,16 +22,18 @@ src/views.py       charts and page layout
 
 ## Questions and charts
 
-All three use Epoch AI's chip-sales data. Money here means the estimated cost of the
-AI chips shipped (units × approximate cost per chip).
+All three use Epoch AI's chip-sales data. Money here means the estimated value of the
+AI chips shipped: Epoch's *Cost Estimate* (units shipped × approximate cost per chip). The file
+does not say whether that is the price a buyer paid or the cost of making the chip. The code
+calls this measure `spend`.
 
 | # | Question | Chart | Chart control |
 |---|---|---|---|
-| 1 | How big is the bill, and who is paid? | Stacked bars: spend per year by designer | US$ spent or share of spend (with % labels) |
+| 1 | How big is the bill, and who is paid? | Stacked bars: value shipped per year by designer | US$ value or share of total (with % labels) |
 | 2 | Is the money moving to newer chips? | Heat map: the top 12 chips by year, oldest chip at the top | none |
-| 3 | Which chips take the money? | Bars: the top 15 chips, coloured by designer | designer buttons: Nvidia, Google, AMD, Other designers |
+| 3 | Which chips take the money? | Bars: the top 15 chips in US\$, coloured by designer, labelled with US\$ and share | designer buttons: Nvidia, Google, Huawei, AMD, Amazon |
 
-Above the questions are four cards (total spend, spend on Nvidia chips, biggest chip, and the
+Above the questions are four cards (value of chips shipped, value of Nvidia chips, biggest chip, and the
 part-year so far) and below them a summary. Every number in the cards, text and summary is calculated
 from the data when the page loads; nothing is typed in by hand.
 
@@ -73,12 +75,14 @@ Cleaning (`src/loading.py`):
    the quarter's *End date*.
 2. **Spend** = *Cost Estimate (USD)*, which equals *Number of Units* × *Chip Cost (USD)* in
    every row. Chips with no cost estimate have spend 0, meaning 'unknown', not 'free'.
-3. **Designer groups:** Nvidia, Google and AMD are named. Every other designer in the file
-   (Huawei, Amazon, Cambricon) is 'Other designers'.
+3. **Designers:** every chip designer is shown separately: Nvidia, Google, Huawei, AMD and
+   Amazon, ordered by total spend. Cambricon has no cost estimate for any chip, so it is
+   left out of the charts and filters. Nvidia, Google and AMD use the shared theme colours;
+   Huawei and Amazon use two extra colours set in `views.py`.
 
 Calculations (`src/analysis.py`):
 
-4. **Question 1:** spend per year and designer group, with each group's share of the year.
+4. **Question 1:** spend per year and designer, with each designer's share of the year.
 5. **Question 2:** spend per year for the 12 chips with the most spend in the selected years,
    listed from oldest to newest by the average year of their spending (weighted by dollars).
 6. **Question 3:** spend per chip added up over the selected years, top 15.
@@ -92,8 +96,12 @@ All of these can be checked in the raw files.
 - Four chips have no cost estimate (Ascend 950PR, Siyuan 590, TPU v8i and Trainium1). They are
   about 3% of all chips shipped and count as $0, so totals are slightly low.
 - Epoch's notes in `chip_types.csv` say the B200 and B300 costs are estimated from the GB200
-  and GB300 systems they mostly shipped in, and that the Huawei Ascend 910B and 910C costs are
-  based on reported prices.
+  and GB300 systems they mostly shipped in, that the Huawei Ascend 910B and 910C costs are
+  based on press reports of selling prices and order values (rounded to \$15k and \$20k per chip),
+  and that the Trainium2 cost is about $4k per chip according to
+  SemiAnalysis.
+- The file does not say whether the cost figures are prices buyers paid or the cost of making
+  the chips, so the tab calls them an estimated value.
 - Several chips are flagged *Incomplete* for the July–September 2026 quarter (and three TPU
   rows for October–December 2022). 2026 covers only
   those three quarters, so its bar is shorter than a full year would be. A note under the

@@ -7,8 +7,6 @@ Nothing in this file draws anything or reads files.
 
 import pandas as pd
 
-from .loading import DESIGNER_GROUPS
-
 
 # --------------------------------------------------------------------------
 # Picking rows
@@ -22,10 +20,16 @@ def filter_chips(chips, years, makers):
     return chips[in_years & from_makers]
 
 
-def makers_by_spend(chips):
-    """Every chip designer in the data, biggest total spend first."""
+def designers_with_spend(chips):
+    """Chip designers that have a cost estimate in the data, biggest total spend first."""
+    totals = chips.groupby("maker")["spend"].sum().sort_values(ascending=False)
+    return totals[totals > 0].index.tolist()
+
+
+def designers_without_spend(chips):
+    """Chip designers with no cost estimate at all in the data (their spend is 0)."""
     totals = chips.groupby("maker")["spend"].sum()
-    return totals.sort_values(ascending=False).index.tolist()
+    return sorted(totals[totals == 0].index)
 
 
 # --------------------------------------------------------------------------
@@ -62,15 +66,15 @@ def next_designers(chips, year, skip="Nvidia", n=2):
     return [(maker, spend / total) for maker, spend in by_maker.items()]
 
 
-def spend_by_designer(chips, years):
-    """Spend per year for each chart group (Nvidia, Google, AMD, Other designers).
+def spend_by_designer(chips, years, designers):
+    """Spend per year for each chip designer in `designers`.
 
-    Every group appears in every year, even with 0 spend. `share` is the group's
-    part (0 to 1) of that year's spend.
+    Every designer appears in every year, even with 0 spend. `share` is the
+    designer's part (0 to 1) of that year's spend.
     """
-    spend = chips.groupby(["year", "designer"])["spend"].sum()
+    spend = chips.groupby(["year", "maker"])["spend"].sum()
     every_row = pd.MultiIndex.from_product(
-        [range(years[0], years[1] + 1), DESIGNER_GROUPS], names=["year", "designer"])
+        [range(years[0], years[1] + 1), designers], names=["year", "maker"])
     table = spend.reindex(every_row, fill_value=0).reset_index()
 
     year_totals = table.groupby("year")["spend"].transform("sum")
@@ -87,7 +91,7 @@ def spend_by_designer(chips, years):
 def top_chips(chips, n):
     """The `n` chips with the most spend, each with its share of all the spend given."""
     total = chips["spend"].sum()
-    by_chip = chips.groupby(["chip", "maker", "designer"])["spend"].sum().reset_index()
+    by_chip = chips.groupby(["chip", "maker"])["spend"].sum().reset_index()
     top = by_chip.sort_values("spend", ascending=False).head(n).reset_index(drop=True)
     top["share"] = top["spend"] / total if total > 0 else 0.0
     return top
