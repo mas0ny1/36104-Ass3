@@ -243,3 +243,26 @@ def render():
             f"**Nvidia controls {nv_share:.0%}** of delivered accelerator compute. Furthermore, megaclusters "
             f"now require between 50 MW and 350 MW of dedicated electrical capacity, making physical power "
             "and electrical grid access the ultimate barrier to entry.")
+
+    # ---- Method ------------------------------------------------------------
+    with st.expander("Data and methods:"):
+        st.markdown(f"""
+**Sources:**
+- **Supercomputing Clusters:** Epoch AI, *GPU Clusters / AI Supercomputers* (CC-BY 4.0), downloaded {loading.DOWNLOADED} from <https://epoch.ai/data/gpu_clusters.csv> (482 clusters).
+- **AI Chip Sales & Deliveries:** Epoch AI, *Data on AI chip sales* (CC-BY 4.0), downloaded {loading.DOWNLOADED} from <https://epoch.ai/data/ai-chip-sales> (74 quarterly records, 2022–{end_year}).
+
+Raw files are stored in `dashboards/tab2_compute/data/raw/`; cleaning and entity mappings are in `src/loading.py`, and calculations in `src/analysis.py`.
+
+| Chart / Metric | File | What we did |
+|---|---|---|
+| Headline: US share & CR4, Chart 1 (Top Owners), Chart 2 (Geopolitical Share) | `gpu_clusters.csv` | Normalized cluster capacity to NVIDIA H100 SXM5 80GB peak 16-bit FLOP/s (`H100 equivalents`). Mapped sub-clusters and cloud instances to parent corporate owners (e.g. Microsoft Azure and OpenAI Goodyear grouped). Categorized sovereign host facilities into 4 geopolitical regions. Summed compute capacity per owner and region operational up to {end_year}. Calculated market concentration ratios (CR4: {stats['cr4']:.1%}, CR8: {stats['cr8']:.1%}, HHI: {stats['hhi']:,.0f}). |
+| Headline: Largest cluster power, Chart 4 (Power Moat) | `gpu_clusters.csv` | Filtered dedicated electrical capacity in *Power Capacity (MW)* for landmark facilities (>10 MW). Converted to residential equivalencies assuming 1 MW continuously powers ~800 average US homes. |
+| Headline: Nvidia dominance, Chart 3 (Silicon Supply) | `cumulative_timelines_by_designer.csv` | Filtered quarterly cumulative delivered compute by hardware designer (2022–{end_year}). Normalized quarterly totals into 100% market shares (`stack="normalize"`) across Nvidia, Google, AMD, Huawei, and Amazon. |
+
+**Known limits:**
+- **Export controls and anonymized facilities:** Trade restrictions and national security sensitivities cause Chinese developers to conceal cluster specifications; Epoch tracks 190 clusters in China anonymously.
+- **Undisclosed proprietary hardware:** Private clusters that hyperscalers do not disclose publicly (e.g., proprietary internal TPU research pods or undisclosed internal enterprise deployments) are absent from public records.
+- **Theoretical peak vs. realized MFU:** H100 equivalents measure theoretical peak 16-bit tensor performance; real-world Model FLOPs Utilization (MFU) averages 30–50% due to distributed interconnect bottlenecks and memory latency.
+- **Defense installations:** Classified government and intelligence supercomputers are omitted.
+""")
+
