@@ -39,6 +39,24 @@ B200_NOTE = ("Epoch notes that most B200 and B300 chips shipped inside GB200 and
              "systems, so it uses the GB200 and GB300 specifications to estimate their cost.")
 
 
+# st.metric cuts long text off with "…". These cards have long labels and notes, so
+# this lets them wrap instead. It only touches the cards in the container with this key.
+# The label gets room for two lines so the big numbers line up across the cards.
+CARDS_KEY = "capital_cards"
+CARD_STYLE = f"""
+<style>
+.st-key-{CARDS_KEY} [data-testid="stMetricLabel"] {{ min-height: 2.8em; }}
+.st-key-{CARDS_KEY} [data-testid="stMetricLabel"] *,
+.st-key-{CARDS_KEY} [data-testid="stMetricValue"] *,
+.st-key-{CARDS_KEY} [data-testid="stMetricDelta"] * {{
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}}
+</style>
+"""
+
+
 @st.cache_data
 def load_data():
     return loading.load_chip_sales()
@@ -430,9 +448,11 @@ def show_cards(f):
                       f"{f['total_partial'] / f['total_last']:.0%} of the {money(f['total_last'])} "
                       f"for all of {f['last']}"))
 
-    columns = st.columns(len(cards), border=True)
-    for column, (label, value, note) in zip(columns, cards):
-        column.metric(label, value, note, delta_color="off", delta_arrow="off")
+    with st.container(key=CARDS_KEY):
+        st.html(CARD_STYLE)
+        columns = st.columns(len(cards), border=True)
+        for column, (label, value, note) in zip(columns, cards):
+            column.metric(label, value, note, delta_color="off", delta_arrow="off")
 
 
 def show_summary(f):
